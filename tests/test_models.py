@@ -50,7 +50,7 @@ def test_varnet(shape, chans, center_fractions, accelerations, mask_center):
     x = create_input(shape)
     outputs, masks = [], []
     for i in range(x.shape[0]):
-        output, mask = transforms.apply_mask(x[i : i + 1], mask_func, seed=123)
+        output, mask, _ = transforms.apply_mask(x[i : i + 1], mask_func, seed=123)
         outputs.append(output)
         masks.append(mask)
 
@@ -85,7 +85,7 @@ def test_varnet_num_sense_lines(
     x = create_input(shape)
     outputs, masks = [], []
     for i in range(x.shape[0]):
-        output, mask = transforms.apply_mask(x[i : i + 1], mask_func, seed=123)
+        output, mask, _ = transforms.apply_mask(x[i : i + 1], mask_func, seed=123)
         outputs.append(output)
         masks.append(mask)
 
@@ -98,34 +98,21 @@ def test_varnet_num_sense_lines(
         sens_pools=2,
         chans=chans,
         pools=2,
-        num_sense_lines=4,
         mask_center=mask_center,
     )
 
-    y = varnet(output, mask.byte())
+    y = varnet(output, mask.byte(), num_low_frequencies=4)
 
     assert y.shape[1:] == x.shape[2:4]
 
 
 def test_unet_scripting():
-    model = Unet(
-        in_chans=1,
-        out_chans=1,
-        chans=8,
-        num_pool_layers=2,
-        drop_prob=0.0,
-    )
+    model = Unet(in_chans=1, out_chans=1, chans=8, num_pool_layers=2, drop_prob=0.0)
     scr = torch.jit.script(model)
     assert scr is not None
 
 
 def test_varnet_scripting():
-    model = VarNet(
-        num_cascades=4,
-        pools=2,
-        chans=8,
-        sens_pools=2,
-        sens_chans=4,
-    )
+    model = VarNet(num_cascades=4, pools=2, chans=8, sens_pools=2, sens_chans=4)
     scr = torch.jit.script(model)
     assert scr is not None
